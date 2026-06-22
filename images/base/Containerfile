@@ -1,0 +1,82 @@
+ARG IMAGE_BASE
+FROM registry.opensuse.org/opensuse/tumbleweed:20260615 AS base
+
+FROM base AS build
+
+RUN zypper install -y make cargo rust libostree-devel go-md2man
+
+RUN mkdir /home/build
+
+# Build bootc from submodule
+COPY bootc /home/build/bootc
+WORKDIR /home/build/bootc
+RUN make bin install-all DESTDIR=/output
+
+# Build bootupd from submodule
+COPY bootupd /home/build/bootupd
+WORKDIR /home/build/bootupd
+RUN make all install-all DESTDIR=/output
+
+FROM base AS system
+
+COPY --from=build /output /
+
+# Install basic system software we'll want in ALL images:
+# Linux kernel, tools and misc firmware for baremetal
+# systemd as init system
+# grub2 as bootloader, because systemd-boot does not support legacy BIOS boot
+# ostree as dependency of bootc
+# btrfs utils for bootc install into btrfs root
+# libcrypto for ???
+# systemd-networkd as DHCP/RA client + the ip command
+# ca certificates, because otherwise HTTPS is broken by default
+# skopeo for bootc updates?
+RUN zypper install -y \
+    kernel-default dracut udev kernel-firmware-amdgpu kernel-firmware-bnx2 kernel-firmware-network \
+    systemd \
+    grub2 grub2-i386-pc grub2-x86_64-efi shim \
+    ostree \
+    btrfsprogs dosfstools \
+    libcrypto57 \
+    systemd-networkd iproute2 \
+    ca-certificates ca-certificates-mozilla \
+    skopeo
+RUN systemctl enable systemd-networkd
+# Generate CA certificates and copy them somewhere that won't be deleted while bootc-ifying the image
+RUN update-ca-certificates && mv /var/lib/ca-certificates /etc/pki/ca-certificates
+
+# Install our build of bootc
+COPY --from=build /output /
+
+# Install configs
+COPY images/base/config/. /
+
+# bootupd EFI grub hacks
+# Doesn't support secure boot! shim was causing boot-looping :/
+# but we need shim binary, otherwise bootupd crashes
+RUN set -eux; \
+    shimver="$(rpm -q --queryformat '%{version}-%{release}' shim)"; \
+    grubver="$(rpm -q --queryformat '%{version}-%{release}' grub2-x86_64-efi)"; \
+    mkdir -p "/usr/lib/efi/shim/${shimver}/EFI/opensuse" \
+             "/usr/lib/efi/grub2/${grubver}/EFI/opensuse" \
+             "/usr/lib/efi/grub2/${grubver}/EFI/BOOT"; \
+    cp -p /usr/share/efi/x86_64/shim.efi       "/usr/lib/efi/shim/${shimver}/EFI/opensuse/shimx64.efi"; \
+    cp -p /usr/share/efi/x86_64/MokManager.efi "/usr/lib/efi/shim/${shimver}/EFI/opensuse/"; \
+    cp -p /usr/share/grub2/x86_64-efi/grub.efi "/usr/lib/efi/grub2/${grubver}/EFI/opensuse/grubx64.efi"; \
+    cp -p /usr/share/grub2/x86_64-efi/grub.efi "/usr/lib/efi/grub2/${grubver}/EFI/BOOT/bootx64.efi"; \
+    install -m0644 /usr/share/servuri/removable-grub.cfg "/usr/lib/efi/grub2/${grubver}/EFI/BOOT/grub.cfg"
+
+# bootupd BIOS grub workaround
+RUN ln -s ../share/grub2 /usr/lib/grub
+
+# Generate metadata for bootupctl so that bootc install also installs grub
+RUN bootupctl backend generate-update-metadata /
+
+# Allow root password to be set in initramfs for troubleshooting
+ARG ROOT_PASSWORD
+RUN if [[ -n "$ROOT_PASSWORD" ]]; then echo "root:${ROOT_PASSWORD}" | chpasswd; fi
+
+# Generate initramfs (BEFORE deleting tmp dir)
+RUN dracut --force "$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)/initramfs.img"
+
+LABEL containers.bootc 1

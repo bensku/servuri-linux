@@ -1,0 +1,4 @@
+ARG IMAGE_BASE
+FROM ${IMAGE_BASE}/server-base
+
+COPY images/server/config/. /

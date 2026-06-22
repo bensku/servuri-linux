@@ -1,0 +1,20 @@
+ARG IMAGE_BASE
+FROM ${IMAGE_BASE}/base
+
+# This does not go into initramfs, don't use for debugging failed switch root!
+RUN echo "root:test" | chpasswd
+
+# Rearrange disk layout for ostree
+RUN rm -rf /boot /home /root /usr/local /srv /opt /mnt /var /usr/lib/sysimage/rpm
+RUN mkdir -p /sysroot /boot /usr/lib/ostree /var
+RUN ln -sT sysroot/ostree /ostree \
+    && ln -sT var/roothome /root \
+    && ln -sT var/srv /srv \
+    && ln -sT var/opt /opt \
+    && ln -sT var/mnt /mnt \
+    && ln -sT var/home /home \
+    && ln -sT ../var/usrlocal /usr/local
+RUN echo "HOME=/var/home" | tee -a "/etc/default/useradd"
+RUN rm -r /usr/etc
+
+RUN bootc container lint

@@ -1,0 +1,6 @@
+[submodule "bootc"]
+	path = bootc
+	url = git@github.com:bootc-dev/bootc.git
+[submodule "bootupd"]
+	path = bootupd
+	url = git@github.com:bensku/bootupd.git
