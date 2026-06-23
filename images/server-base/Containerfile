@@ -1,8 +1,24 @@
 ARG IMAGE_BASE
+FROM registry.opensuse.org/opensuse/tumbleweed:20260615 AS build
+
+RUN zypper install -y make
+
+RUN mkdir /home/build
+
+# Build (really, just arrange files of) foomuuri from submodule
+COPY foomuuri /home/build/foomuuri
+WORKDIR /home/build/foomuuri
+RUN make install DESTDIR=/output
+
 FROM ${IMAGE_BASE}/base
+
+# Install stuff built from source
+COPY --from=build /output /
+RUN systemctl enable foomuuri
 
 # Install a bunch of software
 # additional networking troubleshooting utils
+# foomuuri deps
 # container runtime
 # shell stuff
 # misc admin tools
@@ -10,6 +26,7 @@ FROM ${IMAGE_BASE}/base
 # disk partitioning tools
 RUN zypper install -y \
     iputils traceroute mtr bind-utils tcpdump netcat-openbsd nftables \
+    python314 \
     podman \
     bash-completion jq less \
     nano htop ncdu \

@@ -4,3 +4,6 @@
 [submodule "bootupd"]
 	path = bootupd
 	url = git@github.com:bensku/bootupd.git
+[submodule "foomuuri"]
+	path = foomuuri
+	url = git@github.com:FoobarOy/foomuuri.git
