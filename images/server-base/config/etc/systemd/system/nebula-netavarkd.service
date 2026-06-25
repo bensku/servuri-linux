@@ -1,0 +1,11 @@
+[Unit]
+Description=nebula-netavark daemon
+
+[Service]
+ExecStart=/usr/bin/nebula-netavarkd
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+Type=notify
+
+[Install]
+WantedBy=multi-user.target

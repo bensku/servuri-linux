@@ -1,7 +1,7 @@
 ARG IMAGE_BASE
 FROM registry.opensuse.org/opensuse/tumbleweed:20260615 AS build
 
-RUN zypper install -y make
+RUN zypper install -y make go1.26
 
 RUN mkdir /home/build
 
@@ -9,6 +9,19 @@ RUN mkdir /home/build
 COPY foomuuri /home/build/foomuuri
 WORKDIR /home/build/foomuuri
 RUN make install DESTDIR=/output
+
+# Build Nebula and nebula-netavark
+RUN mkdir -p /output/usr/bin
+COPY nebula /home/build/nebula
+WORKDIR /home/build/nebula
+RUN make bin && mv nebula /output/usr/bin && mv nebula-cert /output/usr/bin
+
+RUN mkdir -p /output/usr/local/lib/netavark
+COPY nebula-netavark /home/build/nebula-netavark
+WORKDIR /home/build/nebula-netavark
+RUN go build -ldflags "-X github.com/bensku/nebula-netavark/network.Build=servuri-custom" ./cmd/nebula-netavarkd \
+    && go build ./cmd/nebula-netavark-plugin \
+    && mv nebula-netavarkd /output/usr/bin && mv nebula-netavark-plugin /output/usr/local/lib/netavark/nebula
 
 FROM ${IMAGE_BASE}/base
 
@@ -35,6 +48,7 @@ RUN zypper install -y \
 RUN systemctl enable sshd
 
 COPY images/server-base/config/. /
+RUN systemctl enable nebula-netavarkd
 
 # Rearrange disk layout for ostree
 RUN rm -rf /boot /home /root /usr/local /srv /opt /mnt /var /usr/lib/sysimage/rpm

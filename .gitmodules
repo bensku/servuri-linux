@@ -7,3 +7,9 @@
 [submodule "foomuuri"]
 	path = foomuuri
 	url = git@github.com:FoobarOy/foomuuri.git
+[submodule "nebula"]
+	path = nebula
+	url = git@github.com:slackhq/nebula.git
+[submodule "nebula-netavark"]
+	path = nebula-netavark
+	url = git@github.com:bensku/nebula-netavark.git
