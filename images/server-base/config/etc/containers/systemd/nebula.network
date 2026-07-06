@@ -1,9 +1,0 @@
-[Unit]
-Description=nebulanet
-
-[Service]
-
-[Network]
-Driver=nebula
-NetworkDeleteOnStop=true
-NetworkName=nebula

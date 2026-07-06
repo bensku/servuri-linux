@@ -1,5 +1,5 @@
 ARG IMAGE_BASE
-FROM registry.opensuse.org/opensuse/tumbleweed:20260615 AS base
+FROM registry.opensuse.org/opensuse/tumbleweed:latest AS base
 
 FROM base AS build
 

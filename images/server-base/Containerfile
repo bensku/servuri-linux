@@ -1,5 +1,5 @@
 ARG IMAGE_BASE
-FROM registry.opensuse.org/opensuse/tumbleweed:20260615 AS build
+FROM registry.opensuse.org/opensuse/tumbleweed:latest AS build
 
 RUN zypper install -y make go1.26
 
@@ -16,12 +16,12 @@ COPY nebula /home/build/nebula
 WORKDIR /home/build/nebula
 RUN make bin && mv nebula /output/usr/bin && mv nebula-cert /output/usr/bin
 
-RUN mkdir -p /output/usr/local/lib/netavark
+RUN mkdir -p /output/usr/lib/netavark
 COPY nebula-netavark /home/build/nebula-netavark
 WORKDIR /home/build/nebula-netavark
 RUN go build -ldflags "-X github.com/bensku/nebula-netavark/network.Build=servuri-custom" ./cmd/nebula-netavarkd \
     && go build ./cmd/nebula-netavark-plugin \
-    && mv nebula-netavarkd /output/usr/bin && mv nebula-netavark-plugin /output/usr/local/lib/netavark/nebula
+    && mv nebula-netavarkd /output/usr/bin && mv nebula-netavark-plugin /output/usr/lib/netavark/nebula
 
 FROM ${IMAGE_BASE}/base
 
