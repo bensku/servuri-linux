@@ -23,6 +23,7 @@ COPY --from=build /output /
 
 # Install basic system software we'll want in ALL images:
 # Linux kernel, tools and misc firmware for baremetal
+# ... and some CPU firmware, because bugfixes etc.
 # systemd as init system
 # grub2 as bootloader, because systemd-boot does not support legacy BIOS boot
 # ostree as dependency of bootc
@@ -32,7 +33,8 @@ COPY --from=build /output /
 # ca certificates, because otherwise HTTPS is broken by default
 # skopeo for bootc updates?
 RUN zypper install -y \
-    kernel-default dracut udev kernel-firmware-amdgpu kernel-firmware-bnx2 kernel-firmware-network \
+    kernel-default dracut udev kernel-firmware-amdgpu kernel-firmware-bnx2 kernel-firmware-network kernel-firmware-intel \
+    ucode-amd ucode-intel \
     systemd \
     grub2 grub2-i386-pc grub2-x86_64-efi shim \
     ostree \
