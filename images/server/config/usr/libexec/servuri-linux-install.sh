@@ -7,6 +7,15 @@ channel=$1
 rootfs=$2
 bootfs=$3
 
-sudo podman run --privileged --pid=host --rm quay.io/bensku/servuri-linux/server:$channel \
+mkdir -p /var/servuri-install
+mount -U $rootfs /var/servuri-install
+mkdir -p /var/servuri-install/boot/efi
+mount -U $bootfs /var/servuri-install/boot/efi
+podman run --privileged --pid=host --rm \
+    -v /dev:/dev -v /var/lib/containers:/var/lib/containers \
+    -v /var/servuri-install:/var/servuri-install \
+    quay.io/bensku/servuri-linux/server:$channel \
     bootc install to-filesystem --composefs-backend --bootloader grub \
-    --root-mount-spec=$rootfs --boot-mount-spec=$bootfs --replace=wipe
+    /var/servuri-install
+umount /var/servuri-install/boot/efi
+umount /var/servuri-install
