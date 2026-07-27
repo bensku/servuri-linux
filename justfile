@@ -15,7 +15,8 @@ disk-img IMAGE CHANNEL:
     sudo podman run --privileged --pid=host --rm -v $PWD/build/{{IMAGE}}.img:/data/linux.img {{image_base}}/{{IMAGE}}:{{CHANNEL}} \
         bootc install to-disk --composefs-backend --generic-image --via-loopback /data/linux.img --filesystem btrfs --bootloader grub --wipe
     sudo chown $(whoami):$(whoami) build/{{IMAGE}}.img
-    zstd --compress build/{{IMAGE}}.img
+    zstd --compress --force build/{{IMAGE}}.img
+    qemu-img convert -f raw -O qcow2 build/{{IMAGE}}.img build/{{IMAGE}}.qcow2
 
 run IMAGE PLATFORM:
     ./run.sh build/{{IMAGE}}.img {{PLATFORM}}

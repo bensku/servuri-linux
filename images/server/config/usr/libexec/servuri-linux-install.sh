@@ -15,7 +15,7 @@ podman run --privileged --pid=host --rm \
     -v /dev:/dev -v /var/lib/containers:/var/lib/containers \
     -v /var/servuri-install:/var/servuri-install \
     quay.io/bensku/servuri-linux/server:$channel \
-    bootc install to-filesystem --composefs-backend --bootloader grub \
+    bootc install to-filesystem --composefs-backend --bootloader grub --karg="rootflags=degraded" \
     /var/servuri-install
 umount /var/servuri-install/boot/efi
 umount /var/servuri-install
