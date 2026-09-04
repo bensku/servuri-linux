@@ -3,7 +3,7 @@ FROM registry.opensuse.org/opensuse/tumbleweed:latest AS base
 
 FROM base AS build
 
-RUN zypper install -y make cargo rust libostree-devel go-md2man
+RUN zypper dup -y && zypper install -y make cargo rust libostree-devel go-md2man
 
 RUN mkdir /home/build
 
@@ -21,7 +21,7 @@ FROM base AS system
 
 COPY --from=build /output /
 
-# Install basic system software we'll want in ALL images:
+# First, update image. Then, install basic system software we'll want in ALL images:
 # Linux kernel, tools and misc firmware for baremetal
 # ... and some CPU firmware, because bugfixes etc.
 # systemd as init system
@@ -32,7 +32,8 @@ COPY --from=build /output /
 # systemd-networkd as DHCP/RA client + the ip command
 # ca certificates, because otherwise HTTPS is broken by default
 # skopeo for bootc updates?
-RUN zypper install -y \
+RUN zypper dup -y \
+    && zypper install -y \
     kernel-default dracut udev kernel-firmware-amdgpu kernel-firmware-bnx2 kernel-firmware-network kernel-firmware-intel \
     ucode-amd ucode-intel \
     systemd \

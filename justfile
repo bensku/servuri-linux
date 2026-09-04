@@ -1,9 +1,13 @@
 image_base := "quay.io/bensku/servuri-linux"
 
-build IMAGE:
-    sudo podman build --build-arg IMAGE_BASE="{{image_base}}" -t {{image_base}}/{{IMAGE}} -f images/{{IMAGE}}/Containerfile .
+build-prep IMAGE:
+    sudo podman build --build-arg IMAGE_BASE="{{image_base}}/prep" -t {{image_base}}/prep/{{IMAGE}} -f images/{{IMAGE}}/Containerfile .
 
-build-all: && (build "base") (build "server-base") (build "server")
+build IMAGE:
+    sudo podman build --build-arg IMAGE_BASE="{{image_base}}/prep" -t {{image_base}}/prep/{{IMAGE}} -f images/{{IMAGE}}/Containerfile .
+    sudo podman build --build-arg PREP_IMAGE="{{image_base}}/prep/{{IMAGE}}" -t {{image_base}}/{{IMAGE}} -f images/_finalize/Containerfile .
+
+build-all: && (build-prep "base") (build-prep "server-base") (build "server")
 
 push IMAGE CHANNEL:
     sudo podman tag {{image_base}}/{{IMAGE}} {{image_base}}/{{IMAGE}}:{{CHANNEL}}
