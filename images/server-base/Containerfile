@@ -39,7 +39,6 @@ RUN systemctl enable foomuuri
 # disk partitioning tools
 # TLP daemon to reduce power usage
 # NTP client for time sync
-# VM/system container management
 RUN zypper install -y \
     iputils traceroute mtr bind-utils tcpdump netcat-openbsd nftables \
     python314 \
@@ -49,8 +48,7 @@ RUN zypper install -y \
     openssh-server \
     util-linux parted growpart \
     tlp powertop \
-    chrony \
-    incus
+    chrony
 RUN systemctl enable sshd \
     && systemctl enable tlp \
     && systemctl enable chronyd
