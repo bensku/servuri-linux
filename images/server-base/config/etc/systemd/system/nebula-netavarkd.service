@@ -1,11 +1,19 @@
 [Unit]
 Description=nebula-netavark daemon
+Documentation=https://github.com/bensku/nebula-netavark
+Wants=network-online.target nss-lookup.target time-sync.target
+After=network-online.target nss-lookup.target time-sync.target
+Before=podman-restart.service
+# Try to get back up even if we crash repeatedly
+# It is BAD if Nebula networking is down, probably containers won't work at all
+StartLimitIntervalSec=0
 
 [Service]
-ExecStart=/usr/bin/nebula-netavarkd
-ExecReload=/bin/kill -HUP $MAINPID
-Restart=on-failure
 Type=notify
+ExecStart=/usr/bin/nebula-netavarkd
+StateDirectory=nebula-netavark
+Restart=always
+RestartSec=5s
 
 [Install]
 WantedBy=multi-user.target
